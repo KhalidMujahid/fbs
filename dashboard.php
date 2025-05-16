@@ -1,5 +1,15 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['admin_email'])) {
+  header("Location: index.php");
+  exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,46 +17,15 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-gray-100">
 
   <div class="flex min-h-screen">
-    <aside class="w-64 bg-white border-r hidden md:block">
-      <div class="p-6">
-        <h1 class="text-2xl font-bold text-green-600">FBS Admin</h1>
-      </div>
-      <nav class="px-4">
-        <ul class="space-y-4">
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-            <a href="#">Dashboard</a>
-          </li>
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="users" class="w-5 h-5"></i>
-            <a href="#">Users</a>
-          </li>
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="credit-card" class="w-5 h-5"></i>
-            <a href="#">Transactions</a>
-          </li>
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="shield-check" class="w-5 h-5"></i>
-            <a href="#">Verification</a>
-          </li>
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="message-square" class="w-5 h-5"></i>
-            <a href="#">Support</a>
-          </li>
-          <li class="flex items-center space-x-3 text-gray-700 hover:text-green-600">
-            <i data-lucide="settings" class="w-5 h-5"></i>
-            <a href="#">Settings</a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+    <?php include 'sidebar.php'; ?>
 
-    
+
     <main class="flex-1 p-6">
-     
+
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-semibold text-gray-800">Dashboard</h2>
         <div class="flex items-center space-x-4">
@@ -57,7 +36,7 @@
         </div>
       </div>
 
-      
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white p-4 rounded-lg shadow hover:shadow-md">
           <div class="flex items-center justify-between">
@@ -145,4 +124,5 @@
     lucide.createIcons();
   </script>
 </body>
+
 </html>

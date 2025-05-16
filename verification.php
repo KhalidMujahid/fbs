@@ -1,48 +1,51 @@
+<?php
+include 'dashboard_auth.php';
+include 'db.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['id'])) {
+  $id = intval($_POST['id']);
+  $status = $_POST['action'] === 'approve' ? 'approved' : 'rejected';
+  mysqli_query($conn, "UPDATE verifications SET status='$status' WHERE id=$id");
+  header("Location: verification.php");
+  exit;
+}
+
+$status_filter = $_GET['status'] ?? 'all';
+$where = $status_filter !== 'all' ? "WHERE v.status = '$status_filter'" : "";
+
+$query = "SELECT v.*, u.email, u.name FROM verifications v 
+          JOIN users u ON v.user_id = u.id 
+          $where 
+          ORDER BY v.submitted_at DESC";
+
+$result = mysqli_query($conn, $query);
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FBS Admin - Verifications</title>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-100">
-
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r hidden md:block">
-      <div class="p-6">
-        <h1 class="text-2xl font-bold text-green-600">FBS Admin</h1>
-      </div>
-      <nav class="px-4 space-y-4">
-        <a href="dashboard.html" class="flex items-center space-x-2 text-gray-700 hover:text-green-600">
-          <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span>Dashboard</span>
-        </a>
-        <a href="users.html" class="flex items-center space-x-2 text-gray-700 hover:text-green-600">
-          <i data-lucide="users" class="w-5 h-5"></i><span>Users</span>
-        </a>
-        <a href="transactions.html" class="flex items-center space-x-2 text-gray-700 hover:text-green-600">
-          <i data-lucide="credit-card" class="w-5 h-5"></i><span>Transactions</span>
-        </a>
-        <a href="support.html" class="flex items-center space-x-2 text-gray-700 hover:text-green-600">
-          <i data-lucide="life-buoy" class="w-5 h-5"></i><span>Support</span>
-        </a>
-        <a href="verification.html" class="flex items-center space-x-2 text-green-600 font-semibold">
-          <i data-lucide="shield-check" class="w-5 h-5"></i><span>Verifications</span>
-        </a>
-      </nav>
-    </aside>
-
+    <?php include 'sidebar.php'; ?>
     <main class="flex-1 p-6">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">User Verifications</h2>
-        <select class="border-gray-300 text-sm rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
-          <option value="all">All</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+        <form method="GET">
+          <select name="status" onchange="this.form.submit()"
+            class="border-gray-300 text-sm rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+            <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>All</option>
+            <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>Pending</option>
+            <option value="approved" <?= $status_filter === 'approved' ? 'selected' : '' ?>>Approved</option>
+            <option value="rejected" <?= $status_filter === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+          </select>
+        </form>
       </div>
 
       <div class="overflow-x-auto bg-white shadow-md rounded-lg">
@@ -57,35 +60,44 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="border-b hover:bg-gray-50">
-              <td class="px-6 py-4">
-                <div class="font-medium">john.doe@example.com</div>
-                <div class="text-xs text-gray-500">John Doe</div>
-              </td>
-              <td class="px-6 py-4">Passport</td>
-              <td class="px-6 py-4">2025-05-12</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">Pending</span>
-              </td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-green-600 hover:underline text-sm">Approve</button>
-                <button class="text-red-600 hover:underline text-sm">Reject</button>
-              </td>
-            </tr>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4">
-                <div class="font-medium">jane.smith@fxmail.com</div>
-                <div class="text-xs text-gray-500">Jane Smith</div>
-              </td>
-              <td class="px-6 py-4">Driver’s License</td>
-              <td class="px-6 py-4">2025-05-10</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Approved</span>
-              </td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-gray-400 text-sm cursor-not-allowed" disabled>Approved</button>
-              </td>
-            </tr>
+            <?php while ($row = mysqli_fetch_assoc($result)): ?>
+              <tr class="border-b hover:bg-gray-50">
+                <td class="px-6 py-4">
+                  <div class="font-medium"><?= htmlspecialchars($row['email']) ?></div>
+                  <div class="text-xs text-gray-500"><?= htmlspecialchars($row['name']) ?></div>
+                </td>
+                <td class="px-6 py-4"><?= htmlspecialchars($row['document_type']) ?></td>
+                <td class="px-6 py-4"><?= htmlspecialchars($row['submitted_at']) ?></td>
+                <td class="px-6 py-4">
+                  <?php
+                  $statusColor = [
+                    'pending' => 'yellow',
+                    'approved' => 'green',
+                    'rejected' => 'red'
+                  ];
+                  $color = $statusColor[$row['status']] ?? 'gray';
+                  ?>
+                  <span class="px-2 py-1 text-xs bg-<?= $color ?>-100 text-<?= $color ?>-700 rounded-full">
+                    <?= ucfirst($row['status']) ?>
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <?php if ($row['status'] === 'pending'): ?>
+                    <form method="POST" class="inline">
+                      <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                      <button name="action" value="approve" class="text-green-600 hover:underline text-sm">Approve</button>
+                    </form>
+                    <form method="POST" class="inline">
+                      <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                      <button name="action" value="reject" class="text-red-600 hover:underline text-sm">Reject</button>
+                    </form>
+                  <?php else: ?>
+                    <button class="text-gray-400 text-sm cursor-not-allowed"
+                      disabled><?= ucfirst($row['status']) ?></button>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endwhile; ?>
           </tbody>
         </table>
       </div>
@@ -95,6 +107,6 @@
   <script>
     lucide.createIcons();
   </script>
-
 </body>
+
 </html>

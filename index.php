@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +8,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
   <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
@@ -16,7 +18,7 @@
     </div>
 
     <form class="space-y-4">
-    
+
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
         <div class="mt-1 relative">
@@ -26,7 +28,7 @@
         </div>
       </div>
 
-      
+
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
         <div class="mt-1 relative">
@@ -38,7 +40,7 @@
         </div>
       </div>
 
-     
+
       <div>
         <button type="submit"
           class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 text-sm font-semibold">
@@ -70,51 +72,52 @@
       lucide.createIcons();
     }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("form");
-  const errorDiv = document.createElement("div");
-  errorDiv.className = "text-red-500 text-sm mb-4";
-  form.prepend(errorDiv);
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("form");
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "text-red-500 text-sm mb-4";
+      form.prepend(errorDiv);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    const email = form.email.value.trim();
-    const password = form.password.value.trim();
+        const email = form.email.value.trim();
+        const password = form.password.value.trim();
 
-    if (!email || !password) {
-      errorDiv.textContent = "Email and password are required.";
-      return;
-    }
+        if (!email || !password) {
+          errorDiv.textContent = "Email and password are required.";
+          return;
+        }
 
-    try {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("password", password);
+        try {
+          const formData = new FormData();
+          formData.append("email", email);
+          formData.append("password", password);
 
-      const response = await fetch("index_auth.php", {
-        method: "POST",
-        body: formData
+          const response = await fetch("index_auth.php", {
+            method: "POST",
+            body: formData
+          });
+
+          if (response.redirected) {
+            window.location.href = response.url;
+            return;
+          }
+
+          const text = await response.text();
+
+          if (text.includes("Invalid credentials") || text.includes("Admin not found")) {
+            errorDiv.textContent = "Login failed: " + text;
+          } else {
+            errorDiv.textContent = "An unknown error occurred.";
+          }
+        } catch (err) {
+          console.error("Login error:", err);
+          errorDiv.textContent = "Could not connect to server.";
+        }
       });
-
-      if (response.redirected) {
-        window.location.href = response.url;
-        return;
-      }
-
-      const text = await response.text();
-
-      if (text.includes("Invalid credentials") || text.includes("Admin not found")) {
-        errorDiv.textContent = "Login failed: " + text;
-      } else {
-        errorDiv.textContent = "An unknown error occurred.";
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      errorDiv.textContent = "Could not connect to server.";
-    }
-  });
-});
-</script>
+    });
+  </script>
 </body>
+
 </html>
