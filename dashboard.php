@@ -23,19 +23,21 @@ if (!isset($_SESSION['admin_email'])) {
   <div class="flex min-h-screen">
     <?php include 'sidebar.php'; ?>
 
-
     <main class="flex-1 p-6">
 
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+        <div>
+          <h2 class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+          <p class="text-sm text-gray-500">Welcome, <?php echo htmlspecialchars($_SESSION['admin_email']); ?></p>
+        </div>
         <div class="flex items-center space-x-4">
           <button class="bg-white p-2 rounded-full shadow hover:bg-gray-100">
             <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
           </button>
-          <img src="#" alt="Admin" class="w-10 h-10 rounded-full border-2 border-green-500">
+          <img src="https://via.placeholder.com/23" alt="Admin"
+            class="w-10 h-10 rounded-full border-2 border-green-500">
         </div>
       </div>
-
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white p-4 rounded-lg shadow hover:shadow-md">
@@ -79,43 +81,8 @@ if (!isset($_SESSION['admin_email'])) {
         </div>
       </div>
 
-
-      <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h4 class="text-lg font-semibold mb-4">Recent Transactions</h4>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li class="flex justify-between border-b pb-2">
-              <span>John Doe</span>
-              <span class="text-green-600">+ $500</span>
-            </li>
-            <li class="flex justify-between border-b pb-2">
-              <span>Jane Smith</span>
-              <span class="text-red-600">- $200</span>
-            </li>
-            <li class="flex justify-between">
-              <span>Mike Ross</span>
-              <span class="text-green-600">+ $750</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h4 class="text-lg font-semibold mb-4">Verification Requests</h4>
-          <ul class="space-y-3 text-sm text-gray-700">
-            <li class="flex justify-between border-b pb-2">
-              <span>Anna Grey</span>
-              <span class="text-yellow-500">Pending</span>
-            </li>
-            <li class="flex justify-between border-b pb-2">
-              <span>Tom Hank</span>
-              <span class="text-green-500">Approved</span>
-            </li>
-            <li class="flex justify-between">
-              <span>Chris Rock</span>
-              <span class="text-yellow-500">Pending</span>
-            </li>
-          </ul>
-        </div>
+      <div class="mt-8 text-right">
+        <a href="logout.php" class="inline-block text-sm text-red-500 hover:underline">Logout</a>
       </div>
     </main>
   </div>

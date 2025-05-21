@@ -9,15 +9,20 @@ require "db.php";
 
 $id = (int) $_GET['id'];
 
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-  $stmt = $pdo->prepare("UPDATE support_tickets SET status = 'Resolved' WHERE id = ?");
-  $stmt->execute([$id]);
-
-  echo "Ticket resolved.";
-} catch (PDOException $e) {
+$stmt = mysqli_prepare($conn, "UPDATE support_tickets SET status = 'Resolved' WHERE id = ?");
+if (!$stmt) {
   http_response_code(500);
-  echo "Error: " . $e->getMessage();
+  echo "Failed to prepare statement: " . mysqli_error($conn);
+  exit;
 }
+
+mysqli_stmt_bind_param($stmt, "i", $id);
+if (mysqli_stmt_execute($stmt)) {
+  echo "Ticket resolved.";
+} else {
+  http_response_code(500);
+  echo "Error resolving ticket: " . mysqli_stmt_error($stmt);
+}
+
+mysqli_stmt_close($stmt);
+mysqli_close($conn);

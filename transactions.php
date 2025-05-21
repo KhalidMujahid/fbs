@@ -1,19 +1,5 @@
 <?php
-require "dashboard_auth.php";
-
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-  $stmt = $pdo->query("SELECT * FROM transactions ORDER BY created_at DESC");
-  $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-  header('Content-Type: application/json');
-  echo json_encode($transactions);
-} catch (PDOException $e) {
-  http_response_code(500);
-  echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
-}
+require 'dashboard_auth.php';
 ?>
 
 <!DOCTYPE html>
@@ -24,11 +10,11 @@ try {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FBS Admin - Transactions</title>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
 
 <body class="bg-gray-100">
-
   <div class="flex min-h-screen">
     <?php include 'sidebar.php'; ?>
 
@@ -56,7 +42,10 @@ try {
               <th class="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="transaction-body">
+            <tr>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-400">Loading transactions...</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -67,30 +56,38 @@ try {
     lucide.createIcons();
 
     async function loadTransactions() {
-      const res = await fetch('transactions.php');
+      const res = await fetch('transactions_api.php');
       const data = await res.json();
+      const tbody = document.getElementById('transaction-body');
+      tbody.innerHTML = '';
 
-      const tbody = document.querySelector('tbody');
-      tbody.innerHTML = "";
+      if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No transactions found.</td></tr>`;
+        return;
+      }
 
       data.forEach(tx => {
-        const color = tx.status === 'Success' ? 'green' :
-          tx.status === 'Pending' ? 'yellow' : 'red';
+        const color = tx.status === 'Success' ? 'green'
+          : tx.status === 'Pending' ? 'yellow'
+            : 'red';
 
-        tbody.innerHTML += `
-        <tr class="border-b hover:bg-gray-50">
-          <td class="px-6 py-4 font-medium">${tx.user_name}</td>
-          <td class="px-6 py-4">${tx.type}</td>
-          <td class="px-6 py-4 text-${color}-600 font-semibold">$${tx.amount}</td>
-          <td class="px-6 py-4">${tx.created_at.split(' ')[0]}</td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-1 text-xs bg-${color}-100 text-${color}-700 rounded-full">${tx.status}</span>
-          </td>
-          <td class="px-6 py-4 text-right">
-            <button class="text-blue-600 hover:underline text-sm">${tx.status === 'Failed' ? 'Retry' : 'View'}</button>
-          </td>
-        </tr>
-      `;
+        const row = `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-6 py-4 font-medium">${tx.user_name}</td>
+            <td class="px-6 py-4">${tx.type}</td>
+            <td class="px-6 py-4 text-${color}-600 font-semibold">$${parseFloat(tx.amount).toFixed(2)}</td>
+            <td class="px-6 py-4">${new Date(tx.created_at).toLocaleDateString()}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 text-xs bg-${color}-100 text-${color}-700 rounded-full">${tx.status}</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button class="text-blue-600 hover:underline text-sm">
+                ${tx.status === 'Failed' ? 'Retry' : 'View'}
+              </button>
+            </td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
       });
     }
 

@@ -1,15 +1,16 @@
 <?php
 session_start();
 
-$host = "localhost";
-$dbUser = "root";
-$dbPass = "";
-$dbName = "fbs";
+$host = "sql310.infinityfree.com";
+$dbUser = "if0_39034753";
+$dbPass = "mZMNtE0P36";
+$dbName = "if0_39034753_fbs";
 
 $conn = new mysqli($host, $dbUser, $dbPass, $dbName);
 
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    echo json_encode(["status" => "error", "message" => "Database connection failed."]);
+    exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -17,34 +18,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     if (empty($email) || empty($password)) {
-        $_SESSION['error'] = "Email and password are required.";
-        header("Location: index.php");
+        echo json_encode(["status" => "error", "message" => "Email and password are required."]);
         exit();
     }
 
-    $stmt = $conn->prepare("SELECT email, password FROM admins WHERE email = ?");
+    $stmt = $conn->prepare("SELECT username FROM admins WHERE username = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 1) {
-        $admin = $result->fetch_assoc();
-
-        if (password_verify($password, $admin['password'])) {
-            $_SESSION['admin_email'] = $admin['email'];
-            header("Location: dashboard.php");
-            exit();
-        } else {
-            $_SESSION['error'] = "Invalid credentials.";
-        }
+        $_SESSION['admin_email'] = $email;
+        echo json_encode(["status" => "success"]);
     } else {
-        $_SESSION['error'] = "Admin not found.";
+        echo json_encode(["status" => "error", "message" => "Invalid credentials."]);
     }
 
-    header("Location: index.php");
     exit();
 } else {
-    header("Location: index.php");
+    echo json_encode(["status" => "error", "message" => "Invalid request."]);
     exit();
 }
-?>

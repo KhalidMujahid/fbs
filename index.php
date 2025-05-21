@@ -10,6 +10,7 @@
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <?php session_start(); ?>
 
   <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
     <div class="mb-6 text-center">
@@ -17,8 +18,9 @@
       <p class="text-sm text-gray-500">Sign in to your admin account</p>
     </div>
 
-    <form class="space-y-4">
+    <div id="error-message" class="text-red-500 text-sm mb-4 text-center"></div>
 
+    <form id="login-form" class="space-y-4">
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
         <div class="mt-1 relative">
@@ -27,7 +29,6 @@
           <i data-lucide="mail" class="absolute right-3 top-2.5 w-4 h-4 text-gray-400"></i>
         </div>
       </div>
-
 
       <div>
         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
@@ -39,7 +40,6 @@
           </button>
         </div>
       </div>
-
 
       <div>
         <button type="submit"
@@ -72,50 +72,40 @@
       lucide.createIcons();
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.querySelector("form");
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "text-red-500 text-sm mb-4";
-      form.prepend(errorDiv);
+    // Handle form submission via fetch
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("error-message");
 
-        const email = form.email.value.trim();
-        const password = form.password.value.trim();
+      if (!email || !password) {
+        errorDiv.textContent = "Email and password are required.";
+        return;
+      }
 
-        if (!email || !password) {
-          errorDiv.textContent = "Email and password are required.";
-          return;
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+
+      try {
+        const response = await fetch("index_auth.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+          window.location.href = "dashboard.php";
+        } else {
+          errorDiv.textContent = data.message || "Login failed.";
         }
-
-        try {
-          const formData = new FormData();
-          formData.append("email", email);
-          formData.append("password", password);
-
-          const response = await fetch("index_auth.php", {
-            method: "POST",
-            body: formData
-          });
-
-          if (response.redirected) {
-            window.location.href = response.url;
-            return;
-          }
-
-          const text = await response.text();
-
-          if (text.includes("Invalid credentials") || text.includes("Admin not found")) {
-            errorDiv.textContent = "Login failed: " + text;
-          } else {
-            errorDiv.textContent = "An unknown error occurred.";
-          }
-        } catch (err) {
-          console.error("Login error:", err);
-          errorDiv.textContent = "Could not connect to server.";
-        }
-      });
+      } catch (error) {
+        console.error("Login error:", error);
+        errorDiv.textContent = "Something went wrong. Please try again.";
+      }
     });
   </script>
 </body>

@@ -17,10 +17,14 @@ if ($action === 'suspend') {
   die("Invalid action.");
 }
 
-$query = "UPDATE users SET status = ? WHERE id = ?";
-$stmt = mysqli_prepare($conn, $query);
-mysqli_stmt_bind_param($stmt, "si", $newStatus, $id);
-mysqli_stmt_execute($stmt);
+$newStatusEscaped = mysqli_real_escape_string($conn, $newStatus);
+
+$query = "UPDATE users SET status = '$newStatusEscaped' WHERE id = $id";
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+  die("Database error: " . mysqli_error($conn));
+}
 
 header("Location: users.php");
 exit;

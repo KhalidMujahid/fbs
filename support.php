@@ -1,20 +1,5 @@
 <?php
 require "dashboard_auth.php";
-
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-  $stmt = $pdo->query("SELECT * FROM support_tickets ORDER BY created_at DESC");
-  $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-  header('Content-Type: application/json');
-  echo json_encode($tickets);
-
-} catch (PDOException $e) {
-  http_response_code(500);
-  echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
-}
 ?>
 
 <!DOCTYPE html>
@@ -29,22 +14,19 @@ try {
 </head>
 
 <body class="bg-gray-100">
-
   <div class="flex min-h-screen">
-
     <?php include 'sidebar.php'; ?>
-
 
     <main class="flex-1 p-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 class="text-2xl font-bold text-gray-800">Support Tickets</h2>
-        <select class="border-gray-300 text-sm rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
-          <option>All</option>
-          <option>Open</option>
-          <option>Resolved</option>
+        <select id="statusFilter"
+          class="border-gray-300 text-sm rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+          <option value="">All</option>
+          <option value="Open">Open</option>
+          <option value="Resolved">Resolved</option>
         </select>
       </div>
-
 
       <div class="overflow-x-auto bg-white shadow-md rounded-lg">
         <table class="w-full text-sm text-gray-700">
@@ -57,31 +39,7 @@ try {
               <th class="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="border-b hover:bg-gray-50">
-              <td class="px-6 py-4 font-medium">john@example.com</td>
-              <td class="px-6 py-4">Withdrawal delay</td>
-              <td class="px-6 py-4">2025-05-10</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">Open</span>
-              </td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-blue-600 hover:underline text-sm">View</button>
-                <button class="text-green-600 hover:underline text-sm">Resolve</button>
-              </td>
-            </tr>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 font-medium">sarah@tradermail.com</td>
-              <td class="px-6 py-4">Account locked</td>
-              <td class="px-6 py-4">2025-05-09</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Resolved</span>
-              </td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button class="text-blue-600 hover:underline text-sm">View</button>
-                <button class="text-red-600 hover:underline text-sm">Delete</button>
-              </td>
-            </tr>
+          <tbody id="ticketTableBody">
           </tbody>
         </table>
       </div>
@@ -90,10 +48,11 @@ try {
 
   <script>
     lucide.createIcons();
-    async function loadSupportTickets() {
-      const res = await fetch('support.php');
+
+    async function loadSupportTickets(status = "") {
+      const res = await fetch('support_api.php' + (status ? `?status=${status}` : ''));
       const tickets = await res.json();
-      const tbody = document.querySelector('tbody');
+      const tbody = document.getElementById('ticketTableBody');
       tbody.innerHTML = "";
 
       tickets.forEach(ticket => {
@@ -111,15 +70,12 @@ try {
             <button class="text-blue-600 hover:underline text-sm">View</button>
             ${ticket.status === 'Open'
             ? `<button class="text-green-600 hover:underline text-sm" onclick="resolveTicket(${ticket.id})">Resolve</button>`
-            : `<button class="text-red-600 hover:underline text-sm" onclick="deleteTicket(${ticket.id})">Delete</button>`
-          }
+            : `<button class="text-red-600 hover:underline text-sm" onclick="deleteTicket(${ticket.id})">Delete</button>`}
           </td>
         </tr>
-      `;
+        `;
       });
     }
-
-    loadSupportTickets();
 
     async function resolveTicket(id) {
       await fetch(`resolve.php?id=${id}`, { method: 'POST' });
@@ -130,8 +86,13 @@ try {
       await fetch(`delete.php?id=${id}`, { method: 'POST' });
       loadSupportTickets();
     }
-  </script>
 
+    document.getElementById('statusFilter').addEventListener('change', (e) => {
+      loadSupportTickets(e.target.value);
+    });
+
+    loadSupportTickets();
+  </script>
 </body>
 
 </html>

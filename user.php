@@ -2,30 +2,41 @@
 include 'dashboard_auth.php';
 include 'db.php';
 
-if (!isset($_GET['id'])) {
-  die("User ID is required.");
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+  die("User ID is required and must be numeric.");
 }
 
 $user_id = intval($_GET['id']);
-$user_query = mysqli_query($conn, "SELECT * FROM users WHERE id = $user_id");
 
-if (!$user_query || mysqli_num_rows($user_query) == 0) {
+// Fetch the user
+$user_query = mysqli_query($conn, "SELECT * FROM users WHERE id = $user_id");
+if (!$user_query || mysqli_num_rows($user_query) === 0) {
   die("User not found.");
 }
 
 $user = mysqli_fetch_assoc($user_query);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $new_balance = floatval($_POST['balance']);
-  $update = mysqli_query($conn, "UPDATE users SET balance = $new_balance WHERE id = $user_id");
-  if ($update) {
-    $user['balance'] = $new_balance;
-    echo "<script>alert('Balance updated successfully.');</script>";
+  if (isset($_POST['balance']) && is_numeric($_POST['balance'])) {
+    $new_balance = floatval($_POST['balance']);
+    $formatted_balance = number_format($new_balance, 2, '.', '');
+
+    $update_query = "UPDATE users SET balance = $formatted_balance WHERE id = $user_id";
+    $update = mysqli_query($conn, $update_query);
+
+    if ($update) {
+      $user['balance'] = $formatted_balance;
+      echo "<script>alert('Balance updated successfully.'); window.location.href = window.location.href;</script>";
+      exit;
+    } else {
+      echo "<script>alert('Failed to update balance.');</script>";
+    }
   } else {
-    echo "<script>alert('Failed to update balance.');</script>";
+    echo "<script>alert('Please enter a valid numeric balance.');</script>";
   }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 

@@ -9,15 +9,20 @@ require "db.php";
 
 $id = (int) $_GET['id'];
 
-try {
-  $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-  $stmt = $pdo->prepare("DELETE FROM support_tickets WHERE id = ?");
-  $stmt->execute([$id]);
-
-  echo "Ticket deleted.";
-} catch (PDOException $e) {
+$stmt = mysqli_prepare($conn, "DELETE FROM support_tickets WHERE id = ?");
+if (!$stmt) {
   http_response_code(500);
-  echo "Error: " . $e->getMessage();
+  echo "Failed to prepare statement: " . mysqli_error($conn);
+  exit;
 }
+
+mysqli_stmt_bind_param($stmt, "i", $id);
+if (mysqli_stmt_execute($stmt)) {
+  echo "Ticket deleted.";
+} else {
+  http_response_code(500);
+  echo "Error deleting ticket: " . mysqli_stmt_error($stmt);
+}
+
+mysqli_stmt_close($stmt);
+mysqli_close($conn);
